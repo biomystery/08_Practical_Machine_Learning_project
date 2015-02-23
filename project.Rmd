@@ -9,80 +9,82 @@ output: html_document
 ## Define the question 
 
 ### Data 
-+ the belt, forearm, arm, and dumbell 
+
+The data is about:
++ Recording movement of the belt, forearm, arm, and dumbell 
 + 6 participants. 
 
 They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset). 
 
+### Data preprocess
+First read the data:
 ```{r}
 testing <-read.csv("pml-testing.csv",header = T,na.strings = c("", " ","NA"))
 training <- read.csv("pml-training.csv",header = T,na.strings = c("", " ","NA"))
 testing<- testing[,c(-1,-2)];training<-training[,c(-1,-2)]
 dim(training);dim(testing)
+```
 
-# clean the data with na. 
+And then clean the data (delete the col with NA.) 
+```{r}
 idx <- !apply(training, 2, function(x) any(is.na(x)))
 training <- training[, idx] 
 testing <- testing[,idx]
 dim(training);dim(testing)
+```
+
+Make all the feature (except "class") numeric. 
+```{r}
 testing[,-58] <- sapply(testing[,-58],as.numeric)
 training[,-58] <- sapply(training[,-58],as.numeric)
 ```
 
-
-Use caret package 
+### Data slice 
+Use caret package, devide the training data into: train set and test set: 
 ```{r}
 library(caret)
 inTrain <- createDataPartition(y=training$classe, p=0.7, list=FALSE)
 ttrain <- training[inTrain,]
 ttest <- training[-inTrain,]
-
 ```
+
+## Machine learning
+
+### Use ttrain set to train the random forest model 
+
+Construct a random forest model for all the 57 features to predict "classes". Trained the model by the ttrain set. 
 
 ```{r,cache=TRUE}
 library(randomForest)
 library(caret)
-
 # use random Foreset method 
 modFit1<-randomForest(formula = classe ~ ., data = ttrain, ntree = 500) 
+```
 
+### Cross validate the model's prediction by using ttest set. 
+```{r,cache=TRUE}
 # compare test set
 predTest<-predict(modFit1,ttest)
-confusionMatrix(predTest, ttest$classe)$table
+(tab<-confusionMatrix(predTest, ttest$classe)$table)
+```
 
+The error rate is: 
+```{r}
+1-sum(diag(tab))/sum(tab)
+```
+
+## Predict the 20 testing data set
+```{r,cache=TRUE}
 # use in the real test 
 predtest <- predict(modFit1,testing[,-58])
 predtest
+
 ```
 
-
-
-### What you should submit
-
-The goal of your project is to ** predict the manner in which they did the exercise.**
-This is the "classe" variable in the training set. 
-
-
-You may use any of the other variables to predict with. You should create a report describing:
-1. how you built your model
-2. how you used cross validation
-3. what you think the expected out of sample error is
-4. why you made the choices you did. 
-
-You will also use your prediction model to predict 20 different test cases. 
-
-1. Your submission should consist of a link to a Github repo with your R markdown and compiled HTML file describing your analysis. Please constrain the text of the writeup to < 2000 words and the number of figures to be less than 5. It will make it easier for the graders if you submit a repo with a gh-pages branch so the HTML page can be viewed online (and you always want to make it easy on graders :-).
-2. You should also apply your machine learning algorithm to the 20 test cases available in the test data above. Please submit your predictions in appropriate format to the programming assignment for automated grading. See the programming assignment for additional details. 
-
-## Prediction Assignment Submission: Instructions Help Center
-
-Please apply the machine learning algorithm you built to each of the **20 test cases** in the testing data set.
-
-For more information and instructions on how to build your model see the prediction assignment writeup. For **each test case** you should submit **a text file with a single capital letter (A, B, C, D, or E) corresponding to your prediction** for the corresponding problem in the test data set. 
-You get 1 point for each correct answer. You may submit up to 2 times for each problem. I know it is a lot of files to submit. It may be helpful to use the following function to create the files. If you have a character vector with your 20 predictions in order for the 20 problems. So something like (note these are not the right answers!):
+## Submit the results
 
 ```{r,eval=FALSE}
-answers = rep("A", 20)
+answers =as.character(predtest)
 ```
 
 then you can load this function by copying and pasting it into R:

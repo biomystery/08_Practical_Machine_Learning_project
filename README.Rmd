@@ -12,3 +12,6 @@ Based on the recording data predict the excersize types. Using the training data
 + project.Rmd: main file to solve the problem
 + project.html: main file after knit
 + problem_id_1 ~ 20.txt: The result files
+
+## Git pages:
+http://biomystery.github.io/08_Practical_Machine_Learning_project/
